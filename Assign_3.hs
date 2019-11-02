@@ -60,7 +60,9 @@ polyListSum (PolyList p1) (PolyList q1) = if length p1 > length q1
 polyListDegree :: (Num a,Eq a) => PolyList a -> Integer
 polyListDegree (PolyList p1) = if p1 == [] || (zipWith (+) p1 p1) == p1
                                then 0
-                                   else toInteger (length p1 - 1)
+                                   else if p1 !! (length p1 - 1) == 0
+                                        then polyListDegree (PolyList (take (length p1 - 1) p1))
+                                            else toInteger (length p1 - 1)
 
 {- -----------------------------------------------------------------
  - polyListProd
@@ -77,12 +79,27 @@ polyListProd (PolyList p1) (PolyList q1) = if p1 == [] || q1 == []
                                                                   lastIndexQ = (length q1 - 1)
 
 {- -----------------------------------------------------------------
+ - toPolyConverter
+ - -----------------------------------------------------------------
+ - Description: Converts part of a polynomial with coefficient c and power i (c * x ^ i) to Poly 
+ -} 
+toPolyConverter :: (Num a,Eq a) => Int -> a -> Poly a
+toPolyConverter i c = if i == 0
+                      then (Prod (Coef 1) (Coef c))
+                          else (Prod X (toPolyConverter (i-1) c))
+
+{- -----------------------------------------------------------------
  - polyListToPoly
  - -----------------------------------------------------------------
- - Description: TODO add comments on polyListToPoly here
+ - Description: Converts a PolyList of form (PolyList [a0, a1,....,an]) to Poly
  -}
-polyListToPoly :: Num a => PolyList a -> Poly a
-polyListToPoly p1 = error "TODO: define me"
+polyListToPoly :: (Num a,Eq a) => PolyList a -> Poly a
+polyListToPoly (PolyList p1) = if length p1 == 1 
+                               then toPolyConverter lastIndex (p1 !! lastIndex)
+                                   else if length p1 == 0
+                                        then error "Enter a non-empty PolyList"
+                                            else (Sum (polyListToPoly (PolyList (take lastIndex p1))) (toPolyConverter lastIndex (p1 !! lastIndex)))
+                                                  where lastIndex = (length p1 - 1)
 
 {- -----------------------------------------------------------------
  - polyToPolyList
@@ -91,3 +108,123 @@ polyListToPoly p1 = error "TODO: define me"
  -}
 polyToPolyList :: (Num a,Eq a) => Poly a -> PolyList a
 polyToPolyList p = error "TODO: define me"
+
+{- -----------------------------------------------------------------
+ - Test Cases
+ - -----------------------------------------------------------------
+ -
+ - -----------------------------------------------------------------
+ - - Function: polyValue
+ - - Test Case Number: 1
+ - - Input: polyValue (polyListToPoly (PolyList [1,2,3,4])) 1
+ - - Expected Output: 10
+ - - Actual Output: 10
+ - -----------------------------------------------------------------
+ - - Function: polyValue
+ - - Test Case Number: 2
+ - - Input: polyValue (polyListToPoly (PolyList [1,2,3,4])) 100
+ - - Expected Output: 4030201
+ - - Actual Output: 4030201
+ - -----------------------------------------------------------------
+ - - Function: polyValue
+ - - Test Case Number: 3
+ - - Input: polyValue (polyListToPoly (PolyList [1,2,3])) (-10)
+ - - Expected Output: 281
+ - - Actual Output: 281
+ - -----------------------------------------------------------------
+ - -----------------------------------------------------------------
+ - - Function: polyListValue
+ - - Test Case Number: 1
+ - - Input: polyListValue (PolyList [1,2,3,4]) 1
+ - - Expected Output: 10
+ - - Actual Output: 10
+ - -----------------------------------------------------------------
+ - - Function: polyListValue
+ - - Test Case Number: 2
+ - - Input: polyListValue (PolyList [1,2,3,4]) 100
+ - - Expected Output: 4030201
+ - - Actual Output: 4030201
+ - -----------------------------------------------------------------
+ - - Function: polyListValue
+ - - Test Case Number: 3
+ - - Input: polyListValue (PolyList [1,2,3]) (-10)
+ - - Expected Output: 281
+ - - Actual Output: 281
+ - -----------------------------------------------------------------
+ - -----------------------------------------------------------------
+ - - Function: polyListSum
+ - - Test Case Number: 1
+ - - Input: polyListSum (PolyList [1,2,3]) (PolyList [1,2,3])
+ - - Expected Output: PolyList [2,4,6]
+ - - Actual Output: PolyList [2,4,6]
+ - -----------------------------------------------------------------
+ - - Function: polyListSum
+ - - Test Case Number: 2
+ - - Input: polyListSum (PolyList [3,2,1]) (PolyList [1,2,3,4])
+ - - Expected Output: PolyList [4,4,4,4]
+ - - Actual Output: PolyList [4,4,4,4]
+ - -----------------------------------------------------------------
+ - - Function: polyListSum
+ - - Test Case Number: 3
+ - - Input: polyListSum (PolyList [0,0,0,0,0]) (PolyList [1,2,3,4])
+ - - Expected Output: PolyList [1,2,3,4,0]
+ - - Actual Output: PolyList [1,2,3,4,0]
+ - -----------------------------------------------------------------
+ - -----------------------------------------------------------------
+ - - Function: polyListDegree
+ - - Test Case Number: 1
+ - - Input: polyListDegree (PolyList [1,2,3,4,5])
+ - - Expected Output: 4
+ - - Actual Output: 4
+ - -----------------------------------------------------------------
+ - - Function: polyListDegree
+ - - Test Case Number: 2
+ - - Input: ppolyListDegree (PolyList [0,0,0,0,0])
+ - - Expected Output: 0
+ - - Actual Output: 0
+ - -----------------------------------------------------------------
+ - - Function: polyListDegree
+ - - Test Case Number: 3
+ - - Input: polyListDegree (polyListSum (PolyList [0,0,0,0,0]) (PolyList [1,2,3,4]))
+ - - Expected Output: 3
+ - - Actual Output: 3
+ - -----------------------------------------------------------------
+ - -----------------------------------------------------------------
+ - - Function: polyListProd
+ - - Test Case Number: 1
+ - - Input: polyListProd  (PolyList [1,1,1,1]) (PolyList [1,1,1,0,1])
+ - - Expected Output: PolyList [1,2,3,3,3,2,1,1]
+ - - Actual Output: PolyList [1,2,3,3,3,2,1,1]
+ - -----------------------------------------------------------------
+ - - Function: polyListProd
+ - - Test Case Number: 2
+ - - Input: polyListProd  (PolyList [1,2,3,4]) (PolyList [1,0,1,0])
+ - - Expected Output: PolyList [1,2,4,6,3,4,0]
+ - - Actual Output: PolyList [1,2,4,6,3,4,0]
+ - -----------------------------------------------------------------
+ - - Function: polyListProd
+ - - Test Case Number: 3
+ - - Input: polyListProd  (PolyList [1,2,3,4]) (PolyList [0,0,0,0,1])
+ - - Expected Output: PolyList [0,0,0,0,1,2,3,4]
+ - - Actual Output: PolyList [0,0,0,0,1,2,3,4]
+ - -----------------------------------------------------------------
+ - -----------------------------------------------------------------
+ - - Function: polyListToPoly
+ - - Test Case Number: 1
+ - - Input: polyListToPoly (PolyList [1,2,3,4])
+ - - Expected Output: Sum (Sum (Sum (Prod (Coef 1) (Coef 1)) (Prod X (Prod (Coef 1) (Coef 2)))) (Prod X (Prod X (Prod (Coef 1) (Coef 3))))) (Prod X (Prod X (Prod X (Prod (Coef 1) (Coef 4)))))
+ - - Actual Output: Sum (Sum (Sum (Prod (Coef 1) (Coef 1)) (Prod X (Prod (Coef 1) (Coef 2)))) (Prod X (Prod X (Prod (Coef 1) (Coef 3))))) (Prod X (Prod X (Prod X (Prod (Coef 1) (Coef 4)))))
+ - -----------------------------------------------------------------
+ - - Function: polyListToPoly
+ - - Test Case Number: 2
+ - - Input: polyListToPoly  (PolyList [0,0])
+ - - Expected Output: Sum (Prod (Coef 1) (Coef 0)) (Prod X (Prod (Coef 1) (Coef 0)))
+ - - Actual Output: Sum (Prod (Coef 1) (Coef 0)) (Prod X (Prod (Coef 1) (Coef 0)))
+ - -----------------------------------------------------------------
+ - - Function: polyListToPoly
+ - - Test Case Number: 3
+ - - Input: polyListToPoly  (PolyList [4,3,2])
+ - - Expected Output: Sum (Sum (Prod (Coef 1) (Coef 4)) (Prod X (Prod (Coef 1) (Coef 3)))) (Prod X (Prod X (Prod (Coef 1) (Coef 2))))
+ - - Actual Output: Sum (Sum (Prod (Coef 1) (Coef 4)) (Prod X (Prod (Coef 1) (Coef 3)))) (Prod X (Prod X (Prod (Coef 1) (Coef 2))))
+
+ -}
